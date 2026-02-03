@@ -8,3 +8,4 @@ chromadb
 pymupdf
 python-dotenv
 streamlit
+faiss-cpu

@@ -14,7 +14,7 @@ class FinancialEngine:
         # LLM performant et gratuit via l'API Groq
         self.llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0)
 
-    def process_pdf(self, file_path):
+    def process_pdf(self, file_path,db_path):
         """
         Charge le PDF avec PyMuPDF pour une meilleure gestion des tableaux 
         et crée le store vectoriel FAISS.
@@ -34,7 +34,16 @@ class FinancialEngine:
         
         # Création de l'index FAISS (base de données vectorielle locale)
         vectors = FAISS.from_documents(final_documents, self.embeddings)
+        vectors.save_local(db_path)
         return vectors
+    
+    def load_vector_db(self, db_path):
+        """Charge un index existant depuis le disque."""
+        return FAISS.load_local(
+            db_path, 
+            self.embeddings, 
+            allow_dangerous_deserialization=True # Nécessaire pour charger les fichiers .faiss
+        )
 
     def get_response(self, user_input, vectors):
         """
