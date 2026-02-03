@@ -65,3 +65,22 @@ class FinancialEngine:
         # Invocation
         response = retrieval_chain.invoke({"input": user_input})
         return response
+    
+    def generate_executive_summary(self, vectors):
+        """Génère un résumé structuré automatique."""
+        from src.prompts import FINANCIAL_PROMPT
+        
+        # On définit une requête experte pour le résumé
+        summary_query = """
+        Effectue une analyse de synthèse de ce rapport. Structure ta réponse avec :
+        1. Faits marquants (Chiffres clés)
+        2. Performance opérationnelle et financière
+        3. Perspectives stratégiques et risques majeurs
+        Donne une conclusion sur la santé financière globale.
+        """
+        
+        document_chain = create_stuff_documents_chain(self.llm, FINANCIAL_PROMPT)
+        retriever = vectors.as_retriever(search_kwargs={"k": 5}) # On prend plus de contexte pour le résumé
+        retrieval_chain = create_retrieval_chain(retriever, document_chain)
+        
+        return retrieval_chain.invoke({"input": summary_query})

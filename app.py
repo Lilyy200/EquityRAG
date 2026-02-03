@@ -68,9 +68,38 @@ with st.sidebar:
 
 # --- ZONE D'ANALYSE PRINCIPALE ---
 if "vectors" in st.session_state:
-    st.subheader(f"Analyse active : {st.session_state.get('current_doc', 'Nouveau document')}")
-    
-    user_input = st.text_input("Pose une question sur les résultats, les risques ou la stratégie :")
+    # Récupération du nom du document pour l'affichage
+    current_doc_name = st.session_state.get('current_doc', 'Document')
+    st.subheader(f"📊 Analyse active : {current_doc_name}")
+
+    # --- NOUVEAU : DASHBOARD EXÉCUTIF ---
+    with st.container():
+        col_summary, col_download = st.columns([3, 1])
+        
+        with col_summary:
+            st.markdown("#### ✨ Synthèse Stratégique")
+        
+        if st.button("🚀 Générer le résumé exécutif automatique"):
+            with st.spinner("Analyse approfondie en cours..."):
+                # Appel de la fonction de synthèse dans l'engine
+                summary_res = st.session_state.engine.generate_executive_summary(st.session_state.vectors)
+                
+                # Affichage du résumé
+                st.markdown("""---""")
+                st.markdown(summary_res["answer"])
+                
+                # Bouton de téléchargement
+                st.download_button(
+                    label="📥 Télécharger l'analyse (TXT)",
+                    data=summary_res["answer"],
+                    file_name=f"Analyse_{current_doc_name}.txt",
+                    mime="text/plain"
+                )
+                st.markdown("""---""")
+
+    # --- ZONE DE CHAT LIBRE ---
+    st.markdown("#### 💬 Assistant Expert")
+    user_input = st.text_input("Pose une question spécifique sur les chiffres, les risques ou la stratégie :")
     
     if user_input:
         with st.spinner("L'IA parcourt le rapport financier..."):
@@ -81,10 +110,15 @@ if "vectors" in st.session_state:
             st.markdown("### 📝 Réponse de l'Analyste :")
             st.info(response["answer"])
             
-            # Affichage des sources (ce que tu aimais)
+            # Affichage des sources (traçabilité)
             with st.expander("🔍 Sources consultées dans le document"):
                 for i, doc in enumerate(response["context"]):
-                    st.markdown(f"**Extrait {i+1} (Page {doc.metadata.get('page', 'N/A')}) :**")
+                    # On affiche la page si elle est présente dans les métadonnées de PyMuPDF
+                    page_num = doc.metadata.get('page', 'N/A')
+                    # Si c'est un index, on ajoute +1 car PyMuPDF commence à 0
+                    if isinstance(page_num, int): page_num += 1
+                    
+                    st.markdown(f"**Extrait {i+1} (Page {page_num}) :**")
                     st.caption(doc.page_content)
                     st.divider()
 else:
